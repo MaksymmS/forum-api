@@ -36,7 +36,7 @@ export const createPost = async (req, res) => {
         if (!title || !content) {
             return res.status(422).json({
                 message: 'Title and content are required'
-            });
+            })
         }
         const newPost = await PostServices.createPost({ title, content, author, category })
         res.status(201).json(newPost);
