@@ -1,12 +1,12 @@
-import {Router} from 'express';
-import * as PostHandler from '../handlers/post.js';
+import { Router } from 'express';
+import type { IPostHandler } from '../handlers/post.js';
 
-const router = Router();
+export function createPostRouter(postHandler: IPostHandler): Router {
+  const router = Router();
 
-router.get('/', PostHandler.getPosts);
-router.get('/:id', PostHandler.getPostsById);
-router.post('/', PostHandler.createPost);
+  router.get('/', postHandler.getPosts);
+  router.get('/:id', postHandler.getPostsById);
+  router.post('/', postHandler.createPost);
 
-export default router;
-
-
+  return router;
+}
