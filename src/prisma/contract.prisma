@@ -1,0 +1,10 @@
+// use prisma-8
+
+model Post {
+  id        String   @id @default(uuid())
+  title     String
+  content   String
+  author    String?
+  category  String?
+  createdAt DateTime @default(now())
+}

@@ -5,15 +5,15 @@ import type { PostDTO, PostResponseDTO } from '../dtos/dto.js';
 export function createPostService(postRepository: IPostRepository): IPostService {
   return {
     async getPosts(category?: string, take?: number): Promise<PostResponseDTO[]> {
-      return postRepository.getAll(category, take);
+      return postRepository.getAllPosts(category, take);
     },
 
     async getPostById(id: string): Promise<PostResponseDTO | null> {
-      return postRepository.getById(id);
+      return postRepository.findPostById(id);
     },
 
     async createPost(postData: PostDTO): Promise<PostResponseDTO> {
-      return postRepository.addPost(postData);
+      return postRepository.createPost(postData);
     }
   };
 }

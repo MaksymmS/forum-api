@@ -19,6 +19,7 @@ export function createPostHandler(postService: IPostService): IPostHandler {
         const posts = await postService.getPosts(category, take);
         res.status(200).json(posts);
       } catch (error) {
+        console.error('Failed to get posts:', error);
         res.status(500).json({ message: 'Internal Server Error' });
       }
     },
@@ -33,6 +34,7 @@ export function createPostHandler(postService: IPostService): IPostHandler {
         }
         res.status(200).json(post);
       } catch (error) {
+        console.error('Failed to get post by ID:', error);
         res.status(500).json({ message: 'Internal Server Error' });
       }
     },
@@ -47,6 +49,7 @@ export function createPostHandler(postService: IPostService): IPostHandler {
         const newPost = await postService.createPost({ title, content, author, category })
         res.status(201).json(newPost);
       } catch (error) {
+        console.error('Failed to create post:', error);
         res.status(500).json({ message: 'Internal Server Error' });
       }
     }

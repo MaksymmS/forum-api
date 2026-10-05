@@ -1,4 +1,5 @@
 import express from 'express';
+import { db } from './prisma/db.js';
 import { createPostRepository } from './repositories/post.js';
 import { createPostService } from './services/post.js';
 import { createPostHandler } from './handlers/post.js';
@@ -8,7 +9,7 @@ export function createApp() {
   const app = express();
   app.use(express.json());
 
-  const postRepository = createPostRepository();
+  const postRepository = createPostRepository(db);
   const postService = createPostService(postRepository);
   const postHandler = createPostHandler(postService);
   const postRouter = createPostRouter(postHandler);
