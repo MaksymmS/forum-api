@@ -11,6 +11,10 @@
     "Post": {
       "model": "Post",
       "namespace": "public"
+    },
+    "User": {
+      "model": "User",
+      "namespace": "public"
     }
   },
   "domain": {
@@ -151,6 +155,47 @@
               "namespaceId": "public",
               "table": "Post"
             }
+          },
+          "User": {
+            "fields": {
+              "email": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "hashPassword": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {},
+            "storage": {
+              "fields": {
+                "email": {
+                  "column": "email"
+                },
+                "hashPassword": {
+                  "column": "hashPassword"
+                },
+                "id": {
+                  "column": "id"
+                }
+              },
+              "namespaceId": "public",
+              "table": "User"
+            }
           }
         }
       }
@@ -264,6 +309,43 @@
                 ]
               },
               "uniques": []
+            },
+            "User": {
+              "columns": {
+                "email": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "hashPassword": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/int4@1",
+                  "default": {
+                    "expression": "autoincrement()",
+                    "kind": "function"
+                  },
+                  "nativeType": "int4",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [],
+              "indexes": [],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": [
+                {
+                  "columns": [
+                    "email"
+                  ]
+                }
+              ]
             }
           }
         },
@@ -271,7 +353,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "3ab48514009e049ba436c22ce47290a7eda70c64b1055baf19347d28f510a16f"
+    "storageHash": "9622dfed6af4864b3052a57fc0e4a932bb05f69a0b2a6ca72aae7bf03ec6acc2"
   },
   "execution": {
     "executionHash": "32b96f8dda7c4f113cfb78a348a8e1ee3bf1f773d93a65885ea7bcc06726f63b",
