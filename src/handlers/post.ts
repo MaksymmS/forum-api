@@ -41,12 +41,24 @@ export function createPostHandler(postService: IPostService): IPostHandler {
 
     async createPost(req: Request<{}, {}, PostDTO>, res: Response): Promise<void> {
       try {
-        const { title, content, author, category } = req.body;
+        const { title, content, author, categoryId } = req.body;
         if (!title || !content) {
-          res.status(422).json({ message: 'Title and content are required' })
+          res.status(422).json({ message: 'Title and content are required' });
           return;
         }
-        const newPost = await postService.createPost({ title, content, author, category })
+        if (categoryId !== undefined && categoryId !== null && !Number.isInteger(categoryId)) {
+          res.status(422).json({ message: 'categoryId must be an integer' });
+          return;
+        }
+
+        const payload: PostDTO = {
+          title,
+          content,
+          ...(author !== undefined ? { author } : {}),
+          ...(categoryId !== undefined ? { categoryId: categoryId ?? null } : {}),
+        };
+
+        const newPost = await postService.createPost(payload);
         res.status(201).json(newPost);
       } catch (error) {
         console.error('Failed to create post:', error);
