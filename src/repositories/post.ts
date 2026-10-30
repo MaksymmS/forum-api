@@ -1,31 +1,69 @@
-import type { IPostRepository } from "../domain/post/repository.js";
+import type { PostgresClient } from "@prisma/orm-postgres/runtime";
+import type { PostRepository } from "../domain/post/repository.js";
+import type { Contract } from "../prisma/contract.js";
 import type { PostDTO, PostResponseDTO } from "../dtos/dto.js";
 
-type Database = typeof import("../prisma/db.js").db;
+export function createPostRepository(db: PostgresClient<Contract>): PostRepository {
+  function mapPost(post: {
+    id: string;
+    title: string;
+    content: string;
+    authorId?: number | null;
+    categoryId?: number | null;
+    createdAt?: unknown;
+  }): PostResponseDTO {
+    const res: PostResponseDTO = {
+      id: post.id,
+      title: post.title,
+      content: post.content,
+      authorId: post.authorId ?? null,
+      categoryId: post.categoryId ?? null,
+    };
+    if (post.createdAt) {
+      res.createdAt = String(post.createdAt);
+    }
+    return res;
+  }
 
-export function createPostRepository(db: Database): IPostRepository {
   async function getAllPosts(category?: string, take?: number): Promise<PostResponseDTO[]> {
-    const query = db.orm.public.Post.orderBy((post) => {
-      return post.createdAt.desc();
-    });
+    let resolvedCategoryId: number | null = null;
 
-    const mapPost = (post: unknown): PostResponseDTO => post as PostResponseDTO;
-
-    if (!take) {
-      const posts = await query.all();
-      return posts.map(mapPost);
+    if (category) {
+      const parsedId = Number(category);
+      if (Number.isInteger(parsedId)) {
+        resolvedCategoryId = parsedId;
+      } else {
+        const cat = await db.orm.public.Category.where({ name: category }).first();
+        if (!cat) {
+          return [];
+        }
+        resolvedCategoryId = cat.id;
+      }
     }
 
-    const posts = await query.limit(take).all();
+    const query = resolvedCategoryId !== null
+      ? db.orm.public.Post.where({ categoryId: resolvedCategoryId })
+      : db.orm.public.Post;
+
+    const orderedQuery = query.orderBy((post) => post.createdAt.desc());
+
+    const posts = take !== undefined ? await orderedQuery.limit(take).all() : await orderedQuery.all();
     return posts.map(mapPost);
   }
 
   async function createPost(postData: PostDTO): Promise<PostResponseDTO> {
-    return db.orm.public.Post.create(postData) as unknown as Promise<PostResponseDTO>;
+    const post = await db.orm.public.Post.create({
+      title: postData.title,
+      content: postData.content,
+      authorId: postData.authorId ?? null,
+      categoryId: postData.categoryId ?? null,
+    });
+    return mapPost(post);
   }
 
   async function findPostById(id: string): Promise<PostResponseDTO | null> {
-    return db.orm.public.Post.where({ id }).first() as Promise<PostResponseDTO | null>;
+    const post = await db.orm.public.Post.where({ id }).first();
+    return post ? mapPost(post) : null;
   }
 
   return { getAllPosts, createPost, findPostById };

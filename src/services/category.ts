@@ -1,9 +1,9 @@
-import type { ICategoryRepository } from '../domain/category/repository.js';
-import type { ICategoryService } from '../domain/category/service.js';
+import type { CategoryRepository } from '../domain/category/repository.js';
+import type { CategoryService } from '../domain/category/service.js';
 import type { CategoryDTO, CategoryResponseDTO } from '../domain/category/entity.js';
 import { CategoryAlreadyExistsError } from '../domain/category/errors.js';
 
-export function createCategoryService(categoryRepository: ICategoryRepository): ICategoryService {
+export function createCategoryService(categoryRepository: CategoryRepository): CategoryService {
   return {
     async getAllCategories(): Promise<CategoryResponseDTO[]> {
       return categoryRepository.findAll();

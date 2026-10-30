@@ -18,9 +18,6 @@ Thumbs.db
 !.vscode/extensions.json
 .idea/
 
-package-lock.json
-node_modules
-tsconfig.json
 node_modules/
 dist/
 
