@@ -4,3 +4,10 @@ export class CategoryAlreadyExistsError extends Error {
     this.name = 'CategoryAlreadyExistsError';
   }
 }
+
+export class CategoryNotFoundError extends Error {
+  constructor() {
+    super('Category not found');
+    this.name = 'CategoryNotFoundError';
+  }
+}
