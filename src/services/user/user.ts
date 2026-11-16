@@ -1,32 +1,33 @@
-import { Temporal } from "temporal-polyfill";
 import type { UserRepository } from "../../domain/user/repository.js";
+import type { RefreshSessionRepository } from "../../domain/refreshSession/repository.js";
 import { InvalidCredentialsError, InvalidTokenError, UserAlreadyExistsError } from "../../domain/user/errors.js";
-import type { PasswordHasher, TokenService, UserService } from "./user.types.js";
+import type { PasswordHasher, TokenService, AuthService, UserService } from "./user.types.js";
 
-const REFRESH_TOKEN_DURATION_HOURS = 24 * 7; // 7 days
+const REFRESH_TOKEN_DURATION_HOURS = 24 * 7; 
 
-export function createUserService(
-    repository: UserRepository,
+export function createAuthService(
+    userRepository: UserRepository,
+    refreshSessionRepository: RefreshSessionRepository,
     passwordHasher: PasswordHasher,
     tokenService: TokenService
-): UserService {
+): AuthService {
     return {
         async register(input) {
             const email = input.email.trim().toLowerCase();
-            const existingUser = await repository.getUserByEmail(email);
+            const existingUser = await userRepository.getUserByEmail(email);
             if (existingUser) {
                 throw new UserAlreadyExistsError();
             }
 
             const hashPassword = await passwordHasher.hashPassword(input.password);
-            const newUser = await repository.createUser({ email, hashPassword });
+            const newUser = await userRepository.createUser({ email, hashPassword });
 
             return { id: newUser.id, email: newUser.email };
         },
 
         async login(input) {
             const email = input.email.trim().toLowerCase();
-            const user = await repository.getUserByEmail(email);
+            const user = await userRepository.getUserByEmail(email);
             if (!user) {
                 throw new InvalidCredentialsError();
             }
@@ -39,57 +40,58 @@ export function createUserService(
             const accessToken = tokenService.signAccessToken(user.id);
             const refreshToken = tokenService.signRefreshToken(user.id);
 
-            const tokenHash = tokenService.hashToken(refreshToken);
-            const expiresAt = Temporal.Now.instant().add({ hours: REFRESH_TOKEN_DURATION_HOURS });
-            await repository.saveRefreshToken({ tokenHash, userId: user.id, expiresAt });
+            const tokenHash = tokenService.hashRefreshToken(refreshToken);
+            const expiresIn = new Date(Date.now() + REFRESH_TOKEN_DURATION_HOURS * 60 * 60 * 1000);
+            await refreshSessionRepository.create(tokenHash, user.id, expiresIn);
 
             return { accessToken, refreshToken };
         },
 
         async refresh(refreshToken) {
             const userId = tokenService.verifyRefreshToken(refreshToken);
-            const tokenHash = tokenService.hashToken(refreshToken);
+            const tokenHash = tokenService.hashRefreshToken(refreshToken);
 
-            const record = await repository.findRefreshToken(tokenHash);
-            if (!record) {
-                throw new InvalidTokenError("Refresh token has been revoked or is invalid");
+            const session = await refreshSessionRepository.getByHash(tokenHash);
+            if (!session) {
+                throw new InvalidTokenError("Refresh token has been revoked or already used");
             }
 
-            // Check expiration against database record
-            const now = Temporal.Now.instant();
-            if (Temporal.Instant.compare(record.expiresAt, now) <= 0) {
-                await repository.deleteRefreshToken(tokenHash);
+
+            const now = new Date();
+            if (session.expiresIn.getTime() <= now.getTime()) {
+                await refreshSessionRepository.delete(tokenHash);
                 throw new InvalidTokenError("Refresh token has expired");
             }
 
-            const user = await repository.getUserById(userId);
+            const user = await userRepository.getUserById(userId);
             if (!user) {
-                await repository.deleteRefreshToken(tokenHash);
+                await refreshSessionRepository.delete(tokenHash);
                 throw new InvalidCredentialsError();
-            }
-
-            // Rotate token: only one request can consume the current token
-            const deleted = await repository.deleteRefreshToken(tokenHash);
-            if (!deleted) {
-                throw new InvalidTokenError("Refresh token has already been used");
             }
 
             const accessToken = tokenService.signAccessToken(user.id);
             const newRefreshToken = tokenService.signRefreshToken(user.id);
-            const newTokenHash = tokenService.hashToken(newRefreshToken);
-            const newExpiresAt = now.add({ hours: REFRESH_TOKEN_DURATION_HOURS });
+            const newTokenHash = tokenService.hashRefreshToken(newRefreshToken);
+            const newExpiresIn = new Date(now.getTime() + REFRESH_TOKEN_DURATION_HOURS * 60 * 60 * 1000);
 
-            await repository.saveRefreshToken({
-                tokenHash: newTokenHash,
-                userId: user.id,
-                expiresAt: newExpiresAt,
-            });
+            const rotated = await refreshSessionRepository.rotation(tokenHash, newTokenHash, newExpiresIn);
+            if (!rotated) {
+                throw new InvalidTokenError("Refresh token has already been used");
+            }
 
             return { accessToken, refreshToken: newRefreshToken };
         },
 
+        async logout(refreshToken) {
+            try {
+                const tokenHash = tokenService.hashRefreshToken(refreshToken);
+                await refreshSessionRepository.delete(tokenHash);
+            } catch {
+            }
+        },
+
         async me(userId) {
-            const user = await repository.getUserById(userId);
+            const user = await userRepository.getUserById(userId);
             if (!user) {
                 throw new InvalidCredentialsError();
             }
@@ -97,3 +99,5 @@ export function createUserService(
         },
     };
 }
+
+export const createUserService = createAuthService;

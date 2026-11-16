@@ -22,15 +22,5 @@ export function createUserRepository(db: PostgresClient<Contract>): UserReposito
         async getUserById(id) {
             return await db.orm.public.User.where({ id }).first();
         },
-        async saveRefreshToken(token) {
-            return await db.orm.public.RefreshToken.create(token);
-        },
-        async findRefreshToken(tokenHash) {
-            return await db.orm.public.RefreshToken.where({ tokenHash }).first();
-        },
-        async deleteRefreshToken(tokenHash) {
-            const deleted = await db.orm.public.RefreshToken.where({ tokenHash }).deleteAndCount();
-            return deleted > 0;
-        },
     };
 }

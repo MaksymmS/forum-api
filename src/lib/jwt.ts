@@ -1,5 +1,5 @@
 import "dotenv/config";
-import crypto from "node:crypto";
+import crypto, { randomUUID } from "node:crypto";
 import jwt, { type Secret, type SignOptions } from "jsonwebtoken";
 import { InvalidTokenError } from "../domain/user/errors.js";
 
@@ -27,9 +27,11 @@ export const REFRESH_TOKEN_EXPIRES_IN = "7d";
 export const ACCESS_TOKEN_MAX_AGE_MS = 15 * 60 * 1000;
 export const REFRESH_TOKEN_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
-export function hashToken(token: string): string {
+export function hashRefreshToken(token: string): string {
   return crypto.createHash("sha256").update(token).digest("hex");
 }
+
+export const hashToken = hashRefreshToken;
 
 export function signAccessToken(userId: number): string {
   const options: SignOptions = {
@@ -45,6 +47,7 @@ export function signRefreshToken(userId: number): string {
     algorithm: "HS256",
     subject: String(userId),
     expiresIn: REFRESH_TOKEN_EXPIRES_IN,
+    jwtid: randomUUID(),
   };
   return jwt.sign({}, refreshSecret, options);
 }

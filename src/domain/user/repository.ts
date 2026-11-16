@@ -1,13 +1,7 @@
-import type { User, RefreshToken } from "./entity.js";
-
-export type NewUser = Omit<User, "id">;
-export type NewRefreshToken = Omit<RefreshToken, "id" | "createdAt">;
+import type { User } from "./entity.js";
 
 export interface UserRepository {
-    createUser(user: NewUser): Promise<User>;
+    createUser(user: Omit<User, "id">): Promise<User>;
     getUserByEmail(email: string): Promise<User | null>;
     getUserById(id: number): Promise<User | null>;
-    saveRefreshToken(token: NewRefreshToken): Promise<RefreshToken>;
-    findRefreshToken(tokenHash: string): Promise<RefreshToken | null>;
-    deleteRefreshToken(tokenHash: string): Promise<boolean>;
 }

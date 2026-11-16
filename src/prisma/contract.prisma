@@ -8,7 +8,7 @@ model Post {
   author     User?     @relation(fields: [authorId], references: [id])
   categoryId Int?
   category   Category? @relation(fields: [categoryId], references: [id])
-  createdAt  DateTime  @default(now())
+  createdAt  TimestamptzJsDate  @default(now())
 }
 
 model Category {
@@ -22,14 +22,15 @@ model User {
   email         String         @unique
   hashPassword  String
   posts         Post[]
-  refreshTokens RefreshToken[]
+  refreshSessions RefreshSession[]
 }
 
-model RefreshToken {
-  id        String   @id @default(uuid())
-  tokenHash String   @unique
-  userId    Int
+model RefreshSession {
+  id        Int      @id @default(autoincrement())
   user      User     @relation(fields: [userId], references: [id])
-  expiresAt DateTime
-  createdAt DateTime @default(now())
+  userId    Int
+  tokenHash String   @unique
+  createdAt TimestamptzJsDate @default(now())
+  expiresIn TimestamptzJsDate
 }
+

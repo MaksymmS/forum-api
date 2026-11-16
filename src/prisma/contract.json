@@ -12,8 +12,8 @@
       "model": "Post",
       "namespace": "public"
     },
-    "RefreshToken": {
-      "model": "RefreshToken",
+    "RefreshSession": {
+      "model": "RefreshSession",
       "namespace": "public"
     },
     "User": {
@@ -98,7 +98,7 @@
               "createdAt": {
                 "nullable": false,
                 "type": {
-                  "codecId": "pg/timestamptz-temporal@1",
+                  "codecId": "pg/timestamptz-date@1",
                   "kind": "scalar"
                 }
               },
@@ -176,26 +176,26 @@
               "table": "Post"
             }
           },
-          "RefreshToken": {
+          "RefreshSession": {
             "fields": {
               "createdAt": {
                 "nullable": false,
                 "type": {
-                  "codecId": "pg/timestamptz-temporal@1",
+                  "codecId": "pg/timestamptz-date@1",
                   "kind": "scalar"
                 }
               },
-              "expiresAt": {
+              "expiresIn": {
                 "nullable": false,
                 "type": {
-                  "codecId": "pg/timestamptz-temporal@1",
+                  "codecId": "pg/timestamptz-date@1",
                   "kind": "scalar"
                 }
               },
               "id": {
                 "nullable": false,
                 "type": {
-                  "codecId": "pg/text@1",
+                  "codecId": "pg/int4@1",
                   "kind": "scalar"
                 }
               },
@@ -237,8 +237,8 @@
                 "createdAt": {
                   "column": "createdAt"
                 },
-                "expiresAt": {
-                  "column": "expiresAt"
+                "expiresIn": {
+                  "column": "expiresIn"
                 },
                 "id": {
                   "column": "id"
@@ -251,7 +251,7 @@
                 }
               },
               "namespaceId": "public",
-              "table": "RefreshToken"
+              "table": "RefreshSession"
             }
           },
           "User": {
@@ -294,7 +294,7 @@
                   "namespace": "public"
                 }
               },
-              "refreshTokens": {
+              "refreshSessions": {
                 "cardinality": "1:N",
                 "on": {
                   "localFields": [
@@ -305,7 +305,7 @@
                   ]
                 },
                 "to": {
-                  "model": "RefreshToken",
+                  "model": "RefreshSession",
                   "namespace": "public"
                 }
               }
@@ -385,7 +385,7 @@
                   "nullable": false
                 },
                 "createdAt": {
-                  "codecId": "pg/timestamptz-temporal@1",
+                  "codecId": "pg/timestamptz-date@1",
                   "default": {
                     "expression": "now()",
                     "kind": "function"
@@ -463,10 +463,10 @@
               },
               "uniques": []
             },
-            "RefreshToken": {
+            "RefreshSession": {
               "columns": {
                 "createdAt": {
-                  "codecId": "pg/timestamptz-temporal@1",
+                  "codecId": "pg/timestamptz-date@1",
                   "default": {
                     "expression": "now()",
                     "kind": "function"
@@ -474,14 +474,18 @@
                   "nativeType": "timestamptz",
                   "nullable": false
                 },
-                "expiresAt": {
-                  "codecId": "pg/timestamptz-temporal@1",
+                "expiresIn": {
+                  "codecId": "pg/timestamptz-date@1",
                   "nativeType": "timestamptz",
                   "nullable": false
                 },
                 "id": {
-                  "codecId": "pg/text@1",
-                  "nativeType": "text",
+                  "codecId": "pg/int4@1",
+                  "default": {
+                    "expression": "autoincrement()",
+                    "kind": "function"
+                  },
+                  "nativeType": "int4",
                   "nullable": false
                 },
                 "tokenHash": {
@@ -502,7 +506,7 @@
                       "userId"
                     ],
                     "namespaceId": "public",
-                    "tableName": "RefreshToken"
+                    "tableName": "RefreshSession"
                   },
                   "target": {
                     "columns": [
@@ -518,8 +522,8 @@
                   "columns": [
                     "userId"
                   ],
-                  "name": "RefreshToken_userId_idx_a489d58a",
-                  "prefix": "RefreshToken_userId_idx",
+                  "name": "RefreshSession_userId_idx_a489d58a",
+                  "prefix": "RefreshSession_userId_idx",
                   "unique": false
                 }
               ],
@@ -579,10 +583,10 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "4014bc513d394ad9bf7324694fae89551d4f5f2956e0818ca88162756b427fa7"
+    "storageHash": "8d644284eb58c4104e3fd18b3fe62e028ac38bfe36106194a194a9c927b60df8"
   },
   "execution": {
-    "executionHash": "162a580922582d8582f6f95706830a565836eea2d73fbe8e43916a5fd5c9d89a",
+    "executionHash": "32b96f8dda7c4f113cfb78a348a8e1ee3bf1f773d93a65885ea7bcc06726f63b",
     "mutations": {
       "defaults": [
         {
@@ -592,17 +596,6 @@
           },
           "ref": {
             "entry": "Post",
-            "field": "id",
-            "namespace": "public"
-          }
-        },
-        {
-          "onCreate": {
-            "id": "uuidv4",
-            "kind": "generator"
-          },
-          "ref": {
-            "entry": "RefreshToken",
             "field": "id",
             "namespace": "public"
           }

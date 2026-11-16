@@ -7,6 +7,7 @@ export interface IUserHandler {
     register(req: Request<{}, {}, UserInput>, res: Response): Promise<void>;
     login(req: Request<{}, {}, UserInput>, res: Response): Promise<void>;
     refresh(req: Request, res: Response): Promise<void>;
+    logout(req: Request, res: Response): Promise<void>;
     me(req: Request, res: Response): Promise<void>;
 }
 
@@ -31,8 +32,19 @@ function setAuthCookies(res: Response, accessToken: string, refreshToken: string
 }
 
 function clearAuthCookies(res: Response) {
-    res.clearCookie("accessToken", { path: "/" });
-    res.clearCookie("refreshToken", { path: "/" });
+    const isProduction = process.env.NODE_ENV === "production";
+    res.clearCookie("accessToken", {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: isProduction,
+        path: "/",
+    });
+    res.clearCookie("refreshToken", {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: isProduction,
+        path: "/",
+    });
 }
 
 export function createUserHandler(userService: UserService): IUserHandler {
@@ -114,6 +126,20 @@ export function createUserHandler(userService: UserService): IUserHandler {
                 }
                 console.error("Failed to refresh token:", error);
                 res.status(500).json({ message: "Internal Server Error" });
+            }
+        },
+
+        async logout(req, res): Promise<void> {
+            try {
+                const refreshToken = req.cookies?.refreshToken;
+                if (typeof refreshToken === "string" && refreshToken.length > 0) {
+                    await userService.logout(refreshToken);
+                }
+            } catch (error) {
+                console.error("Failed to log out user:", error);
+            } finally {
+                clearAuthCookies(res);
+                res.status(200).json({ message: "OK" });
             }
         },
 
